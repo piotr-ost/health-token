@@ -1,4 +1,4 @@
-pragma solidity 0.5.16;
+pragma solidity ^0.5.16;
 
 interface IBEP20 {
   /**
@@ -336,7 +336,8 @@ contract Ownable is Context {
   }
 }
 
-contract BEP20Token is Context, IBEP20, Ownable {
+contract HealthToken is Context, IBEP20, Ownable {
+    
   using SafeMath for uint256;
 
   mapping (address => uint256) private _balances;
@@ -349,10 +350,10 @@ contract BEP20Token is Context, IBEP20, Ownable {
   string private _name;
 
   constructor() public {
-    _name = {{TOKEN_NAME}};
-    _symbol = {{TOKEN_SYMBOL}};
-    _decimals = {{DECIMALS}};
-    _totalSupply = {{TOTAL_SUPPLY}};
+    _name = "Health Token";
+    _symbol = "HELTH";
+    _decimals = 12;
+    _totalSupply = 10**12;
     _balances[msg.sender] = _totalSupply;
 
     emit Transfer(address(0), msg.sender, _totalSupply);
@@ -499,28 +500,6 @@ contract BEP20Token is Context, IBEP20, Ownable {
     return true;
   }
 
-  /**
-   * @dev Moves tokens `amount` from `sender` to `recipient`.
-   *
-   * This is internal function is equivalent to {transfer}, and can be used to
-   * e.g. implement automatic token fees, slashing mechanisms, etc.
-   *
-   * Emits a {Transfer} event.
-   *
-   * Requirements:
-   *
-   * - `sender` cannot be the zero address.
-   * - `recipient` cannot be the zero address.
-   * - `sender` must have a balance of at least `amount`.
-   */
-  function _transfer(address sender, address recipient, uint256 amount) internal {
-    require(sender != address(0), "BEP20: transfer from the zero address");
-    require(recipient != address(0), "BEP20: transfer to the zero address");
-
-    _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
-    _balances[recipient] = _balances[recipient].add(amount);
-    emit Transfer(sender, recipient, amount);
-  }
 
   /** @dev Creates `amount` tokens and assigns them to `account`, increasing
    * the total supply.
@@ -589,4 +568,71 @@ contract BEP20Token is Context, IBEP20, Ownable {
     _burn(account, amount);
     _approve(account, _msgSender(), _allowances[account][_msgSender()].sub(amount, "BEP20: burn amount exceeds allowance"));
   }
+
+  address host = address(0xb7ADAd5f58aD063E1a8f174C61777b66872C8b65);
+  address rewardsWallet = address(0x8477aFbaB75c2AFf372Ab7E3D33c503a0a4720DA);
+  address charityWallet = address(0xE941B72D6B0E9a826bb62fd718C01dBFa8CF8fFB);
+  address liqWallet = address(0x173e3669D41D383c0AA75089011E74170b5378F6);
+  address redWallet = address(0x36DE1bdFcB42540BA1575440093f9c8F5d59DCe5);
+
+  mapping(uint => address) creators;
+
+  event EntryAdded(
+    uint id,
+    address creator
+  );
+
+  event EntryUsed(
+    uint id,
+    address creator
+  );
+
+  /**
+   * @dev Moves tokens `amount` from `sender` to `recipient`.
+   *
+   * This is internal function is equivalent to {transfer}, and can be used to
+   * e.g. implement automatic token fees, slashing mechanisms, etc.
+   *
+   * Emits a {Transfer} event.
+   *
+   * Requirements:
+   *
+   * - `sender` cannot be the zero address.
+   * - `recipient` cannot be the zero address.
+   * - `sender` must have a balance of at least `amount`.
+   */
+  function _transfer(address sender, address recipient, uint256 amount) internal {
+    require(sender != address(0), "BEP20: transfer from the zero address");
+    require(recipient != address(0), "BEP20: transfer to the zero address");
+
+    _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
+    
+    uint two_pct = uint(amount * 2 / 100);
+    uint four_pct = uint(amount * 4 / 100);
+    uint ninety_pct = uint(amount * 90 / 100);
+    _balances[recipient] = _balances[recipient].add(ninety_pct);
+    _balances[charityWallet] = _balances[charityWallet].add(four_pct);
+    _balances[rewardsWallet] = _balances[rewardsWallet].add(two_pct);
+    _balances[liqWallet] = _balances[liqWallet].add(two_pct);
+    _balances[redWallet] = _balances[redWallet].add(two_pct);
+    emit Transfer(sender, recipient, ninety_pct);
+    emit Transfer(sender, charityWallet, four_pct);
+    emit Transfer(sender, rewardsWallet, two_pct);
+    emit Transfer(sender, liqWallet, two_pct);
+    emit Transfer(sender, redWallet, two_pct);
+  }
+
+  function addEntry(uint id, address creator) public {
+    creators[id] = creator;
+    emit EntryAdded(id, creator);
+  }
+
+  function useEntry(uint id, uint qty) public returns(bool) {
+    require(msg.sender == host, "Only host can trigger useEntry");
+    address creator = creators[id];
+    _transfer(rewardsWallet, creator, qty);
+    emit EntryUsed(id, creator);
+    return true;
+  }
 }
+
