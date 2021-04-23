@@ -352,8 +352,8 @@ contract HealthToken is Context, IBEP20, Ownable {
   constructor() public {
     _name = "Health Token";
     _symbol = "HELTH";
-    _decimals = 12;
-    _totalSupply = 10**12;
+    _decimals = 18;
+    _totalSupply = 1000000000000000000000000000000;
     _balances[msg.sender] = _totalSupply;
 
     emit Transfer(address(0), msg.sender, _totalSupply);
