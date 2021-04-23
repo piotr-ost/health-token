@@ -569,6 +569,10 @@ contract HealthToken is Context, IBEP20, Ownable {
     _approve(account, _msgSender(), _allowances[account][_msgSender()].sub(amount, "BEP20: burn amount exceeds allowance"));
   }
 
+   /**
+   * Please change the distribution wallet addaddress,
+   * according to your requirement
+   */
   address host = address(0xb7ADAd5f58aD063E1a8f174C61777b66872C8b65);
   address rewardsWallet = address(0x8477aFbaB75c2AFf372Ab7E3D33c503a0a4720DA);
   address charityWallet = address(0xE941B72D6B0E9a826bb62fd718C01dBFa8CF8fFB);
@@ -606,20 +610,36 @@ contract HealthToken is Context, IBEP20, Ownable {
     require(recipient != address(0), "BEP20: transfer to the zero address");
 
     _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
-    
-    uint two_pct = uint(amount * 2 / 100);
-    uint four_pct = uint(amount * 4 / 100);
     uint ninety_pct = uint(amount * 90 / 100);
     _balances[recipient] = _balances[recipient].add(ninety_pct);
-    _balances[charityWallet] = _balances[charityWallet].add(four_pct);
-    _balances[rewardsWallet] = _balances[rewardsWallet].add(two_pct);
-    _balances[liqWallet] = _balances[liqWallet].add(two_pct);
-    _balances[redWallet] = _balances[redWallet].add(two_pct);
     emit Transfer(sender, recipient, ninety_pct);
-    emit Transfer(sender, charityWallet, four_pct);
-    emit Transfer(sender, rewardsWallet, two_pct);
-    emit Transfer(sender, liqWallet, two_pct);
-    emit Transfer(sender, redWallet, two_pct);
+    uint _amount = amount.sub(ninety_pct);
+    transferDistribution(_amount);
+  }
+
+  /**
+   * transferDistribution function enables to do the distribution internally,
+   * whenever a user transfer tokens wallet to wallet, 
+   * for each and every transaction it sends charity wallet a 4%, reward wallet a 2%,
+   * liquidity wallet a 2%, red wallet a 2% from the transaction amount.
+  */
+  function transferDistribution(uint _amount) internal {
+      uint charityCommission = _amount.div(10)*4;
+      uint rewardCommission = _amount.div(10)*2;
+      uint liquidityCommission = _amount.div(10)*2;
+      uint redCommission = _amount.div(10)*2;
+      
+      _balances[charityWallet] = _balances[charityWallet].add(charityCommission);
+      emit Transfer(msg.sender, charityWallet, charityCommission);
+      
+      _balances[rewardsWallet] = _balances[rewardsWallet].add(rewardCommission);
+      emit Transfer(msg.sender, rewardsWallet, rewardCommission);
+      
+      _balances[liqWallet] = _balances[liqWallet].add(liquidityCommission);
+      emit Transfer(msg.sender, liqWallet, liquidityCommission);
+      
+      _balances[redWallet] = _balances[redWallet].add(redCommission);
+      emit Transfer(msg.sender, redWallet, redCommission);
   }
 
   function addEntry(uint id, address creator) public {
