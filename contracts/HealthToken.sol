@@ -349,6 +349,12 @@ contract HealthToken is Context, IBEP20, Ownable {
   string private _symbol;
   string private _name;
 
+  address public host;
+  address public rewardsWallet;
+  address public charityWallet;
+  address public liqWallet;
+  address public redWallet;
+
   constructor() public {
     _name = "Health Token";
     _symbol = "HELTH";
@@ -573,11 +579,51 @@ contract HealthToken is Context, IBEP20, Ownable {
    * Please change the distribution wallet addaddress,
    * according to your requirement
    */
-  address host = address(0xb7ADAd5f58aD063E1a8f174C61777b66872C8b65);
-  address rewardsWallet = address(0x8477aFbaB75c2AFf372Ab7E3D33c503a0a4720DA);
-  address charityWallet = address(0xE941B72D6B0E9a826bb62fd718C01dBFa8CF8fFB);
-  address liqWallet = address(0x173e3669D41D383c0AA75089011E74170b5378F6);
-  address redWallet = address(0x36DE1bdFcB42540BA1575440093f9c8F5d59DCe5);
+   
+  function setHostWallet(address _hostWallet) public onlyOwner returns(bool){
+      
+      // ensure that the addresses as params to the func are not empty
+      require(_hostWallet != address(0x0));
+      
+      host = _hostWallet;
+      return true;
+  }
+  
+  function setRewardWallet(address _rewardWallet) public onlyOwner returns(bool) {
+      
+        // ensure that the addresses as params to the func are not empty
+        require(_rewardWallet != address(0x0));
+
+        rewardsWallet = _rewardWallet;
+        return true;
+  }
+  
+  function setCharityWallet(address _charityWallet) public onlyOwner returns(bool) {
+      
+      // ensure that the addresses as params to the func are not empty
+      require(_charityWallet != address(0x0));
+      
+      charityWallet = _charityWallet;
+      return true;
+  }
+  
+  function setLiqWallet(address _liquidityWallet) public onlyOwner returns(bool) {
+      
+      // ensure that the addresses as params to the func are not empty
+      require(_liquidityWallet != address(0x0));
+      
+      liqWallet = _liquidityWallet;
+      return true;
+  }
+  
+  function setRedWallet(address _redWallet) public onlyOwner returns(bool) {
+      
+      // ensure that the addresses as params to the func are not empty
+      require(_redWallet != address(0x0));
+      
+      redWallet = _redWallet;
+      return true;
+  }
 
   mapping(uint => address) creators;
 
