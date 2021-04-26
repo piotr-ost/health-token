@@ -354,6 +354,7 @@ contract HealthToken is Context, IBEP20, Ownable {
   address public charityWallet;
   address public liqWallet;
   address public redWallet;
+  address public marketingWallet;
 
   constructor() public {
     _name = "Health Token";
@@ -656,7 +657,7 @@ contract HealthToken is Context, IBEP20, Ownable {
     require(recipient != address(0), "BEP20: transfer to the zero address");
 
     _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
-    uint ninety_pct = amount.div(100).mul(90);
+    uint ninety_pct = amount.div(100).mul(95);
     _balances[recipient] = _balances[recipient].add(ninety_pct);
     emit Transfer(sender, recipient, ninety_pct);
     uint _amount = amount.sub(ninety_pct);
@@ -670,10 +671,12 @@ contract HealthToken is Context, IBEP20, Ownable {
    * liquidity wallet a 2%, red wallet a 2% from the transaction amount.
   */
   function transferDistribution(uint _amount) internal {
-      uint charityCommission = _amount.div(10).mul(4);
-      uint rewardCommission = _amount.div(10).mul(2);
-      uint liquidityCommission = _amount.div(10).mul(2);
-      uint redCommission = _amount.div(10).mul(2);
+      uint charityCommission = _amount.div(5).mul(1);
+      uint rewardCommission = _amount.div(5).mul(1);
+      uint liquidityCommission = _amount.div(5).mul(1);
+      uint _liquidityCommission = liquidityCommission.div(4).mul(3);
+      uint marketingCommission = liquidityCommission.div(4);
+      uint redCommission = _amount.div(5).mul(2);
       
       _balances[charityWallet] = _balances[charityWallet].add(charityCommission);
       emit Transfer(msg.sender, charityWallet, charityCommission);
@@ -681,8 +684,11 @@ contract HealthToken is Context, IBEP20, Ownable {
       _balances[rewardsWallet] = _balances[rewardsWallet].add(rewardCommission);
       emit Transfer(msg.sender, rewardsWallet, rewardCommission);
       
-      _balances[liqWallet] = _balances[liqWallet].add(liquidityCommission);
-      emit Transfer(msg.sender, liqWallet, liquidityCommission);
+      _balances[liqWallet] = _balances[liqWallet].add(_liquidityCommission);
+      emit Transfer(msg.sender, liqWallet, _liquidityCommission);
+
+      _balances[marketingWallet] = _balances[marketingWallet].add(marketingCommission);
+      emit Transfer(msg.sender, marketingWallet, marketingCommission);
       
       _balances[redWallet] = _balances[redWallet].add(redCommission);
       emit Transfer(msg.sender, redWallet, redCommission);
