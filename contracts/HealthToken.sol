@@ -344,6 +344,11 @@ contract HealthToken is Context, IBEP20, Ownable {
 
   mapping (address => mapping (address => uint256)) private _allowances;
 
+  mapping (address => bool) public frozenAccount;
+  
+  /* This generates a public event on the blockchain that will notify clients */
+  event FrozenFunds(address target, bool frozen);
+
   uint256 private _totalSupply;
   uint8 private _decimals;
   string private _symbol;
@@ -354,6 +359,10 @@ contract HealthToken is Context, IBEP20, Ownable {
   address public charityWallet;
   address public liqWallet;
   address public redWallet;
+  address public marketingWallet;
+
+  uint256 public devWalletLockedStarted;
+  uint256 public WalletLockEndTime;
 
   constructor() public {
     _name = "Health Token";
@@ -575,11 +584,9 @@ contract HealthToken is Context, IBEP20, Ownable {
     _approve(account, _msgSender(), _allowances[account][_msgSender()].sub(amount, "BEP20: burn amount exceeds allowance"));
   }
 
-   /**
-   * Please change the distribution wallet addaddress,
-   * according to your requirement
-   */
-   
+  /**
+   * Sets the Host wallet, can only be executed by the contract owner
+  */
   function setHostWallet(address _hostWallet) public onlyOwner returns(bool){
       
       // ensure that the addresses as params to the func are not empty
@@ -589,6 +596,9 @@ contract HealthToken is Context, IBEP20, Ownable {
       return true;
   }
   
+  /**
+   * Sets the Reward wallet, can only be executed by the contract owner
+  */
   function setRewardWallet(address _rewardWallet) public onlyOwner returns(bool) {
       
         // ensure that the addresses as params to the func are not empty
@@ -598,6 +608,9 @@ contract HealthToken is Context, IBEP20, Ownable {
         return true;
   }
   
+  /**
+   * Sets the Charity wallet, can only be executed by the contract owner
+  */
   function setCharityWallet(address _charityWallet) public onlyOwner returns(bool) {
       
       // ensure that the addresses as params to the func are not empty
@@ -607,6 +620,9 @@ contract HealthToken is Context, IBEP20, Ownable {
       return true;
   }
   
+  /**
+   * Sets the Liquidity wallet, can only be executed by the contract owner
+  */
   function setLiqWallet(address _liquidityWallet) public onlyOwner returns(bool) {
       
       // ensure that the addresses as params to the func are not empty
@@ -616,12 +632,27 @@ contract HealthToken is Context, IBEP20, Ownable {
       return true;
   }
   
+  /**
+   * Sets the Redistribution wallet, can only be executed by the contract owner
+  */
   function setRedWallet(address _redWallet) public onlyOwner returns(bool) {
       
       // ensure that the addresses as params to the func are not empty
       require(_redWallet != address(0x0));
       
       redWallet = _redWallet;
+      return true;
+  }
+
+  /**
+   * Sets the Marketing wallet, can only be executed by the contract owner
+  */
+  function setMarketingWallet(address _marketingWallet) public onlyOwner returns(bool) {
+
+      // ensure that the addresses as params to the func are not empty
+      require(_marketingWallet != address(0x0));
+
+      marketingWallet = _marketingWallet;
       return true;
   }
 
@@ -654,9 +685,10 @@ contract HealthToken is Context, IBEP20, Ownable {
   function _transfer(address sender, address recipient, uint256 amount) internal {
     require(sender != address(0), "BEP20: transfer from the zero address");
     require(recipient != address(0), "BEP20: transfer to the zero address");
-
+    // checking whether the sender's account is prohibited transfering
+    require(!frozenAccount[sender],"Account is been Locked for Sending Transactions");
     _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
-    uint ninety_pct = amount.div(100).mul(90);
+    uint ninety_pct = amount.div(100).mul(95);
     _balances[recipient] = _balances[recipient].add(ninety_pct);
     emit Transfer(sender, recipient, ninety_pct);
     uint _amount = amount.sub(ninety_pct);
@@ -666,14 +698,16 @@ contract HealthToken is Context, IBEP20, Ownable {
   /**
    * transferDistribution function enables to do the distribution internally,
    * whenever a user transfer tokens wallet to wallet, 
-   * for each and every transaction it sends charity wallet a 4%, reward wallet a 2%,
-   * liquidity wallet a 2%, red wallet a 2% from the transaction amount.
+   * for each and every transaction it sends charity wallet a 1%, reward wallet a 1%,
+   * liquidity wallet a 0.75%, marketing wallet a 0.25%, redistribution wallet a 2% from the transaction amount.
   */
   function transferDistribution(uint _amount) internal {
-      uint charityCommission = _amount.div(10).mul(4);
-      uint rewardCommission = _amount.div(10).mul(2);
-      uint liquidityCommission = _amount.div(10).mul(2);
-      uint redCommission = _amount.div(10).mul(2);
+      uint charityCommission = _amount.div(5).mul(1);
+      uint rewardCommission = _amount.div(5).mul(1);
+      uint liquidityCommission = _amount.div(5).mul(1);
+      uint _liquidityCommission = liquidityCommission.div(4).mul(3);
+      uint marketingCommission = liquidityCommission.div(4);
+      uint redCommission = _amount.div(5).mul(2);
       
       _balances[charityWallet] = _balances[charityWallet].add(charityCommission);
       emit Transfer(msg.sender, charityWallet, charityCommission);
@@ -681,8 +715,11 @@ contract HealthToken is Context, IBEP20, Ownable {
       _balances[rewardsWallet] = _balances[rewardsWallet].add(rewardCommission);
       emit Transfer(msg.sender, rewardsWallet, rewardCommission);
       
-      _balances[liqWallet] = _balances[liqWallet].add(liquidityCommission);
-      emit Transfer(msg.sender, liqWallet, liquidityCommission);
+      _balances[liqWallet] = _balances[liqWallet].add(_liquidityCommission);
+      emit Transfer(msg.sender, liqWallet, _liquidityCommission);
+
+      _balances[marketingWallet] = _balances[marketingWallet].add(marketingCommission);
+      emit Transfer(msg.sender, marketingWallet, marketingCommission);
       
       _balances[redWallet] = _balances[redWallet].add(redCommission);
       emit Transfer(msg.sender, redWallet, redCommission);
@@ -700,5 +737,29 @@ contract HealthToken is Context, IBEP20, Ownable {
     emit EntryUsed(id, creator);
     return true;
   }
+
+  /**
+    freeze? Prevent | Allow` `target` from sending tokens
+    target Address to be frozen
+   */
+  function freezeAccount(address target) public onlyOwner returns (bool success)  {
+    frozenAccount[target] = true;
+    emit FrozenFunds(target, true);
+    devWalletLockedStarted = block.timestamp; 
+    WalletLockEndTime = devWalletLockedStarted.add(31104000);
+    return true;
+  }
+    
+  /** 
+  unfreezeAccount to unlock the wallet, it can only be executed 1 year after the
+  account is locked.
+   */  
+  function unfreezeAccount(address target) public onlyOwner returns (bool success) {
+    require(block.timestamp > WalletLockEndTime, "One Year Timed-Lock is in Active");
+    frozenAccount[target] = false;
+    emit FrozenFunds(target, false);
+    return false;
+  }
+
 }
 
