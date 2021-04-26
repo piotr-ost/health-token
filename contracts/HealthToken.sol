@@ -626,6 +626,15 @@ contract HealthToken is Context, IBEP20, Ownable {
       return true;
   }
 
+  function setMarketingWallet(address _marketingWallet) public onlyOwner returns(bool) {
+
+      // ensure that the addresses as params to the func are not empty
+      require(_marketingWallet != address(0x0));
+
+      marketingWallet = _marketingWallet;
+      return true;
+  }
+
   mapping(uint => address) creators;
 
   event EntryAdded(
