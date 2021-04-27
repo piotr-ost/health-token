@@ -343,7 +343,7 @@ contract HealthToken is Context, IBEP20, Ownable {
   mapping (address => uint256) private _balances;
 
   mapping (address => mapping (address => uint256)) private _allowances;
-
+  
   mapping (address => bool) public frozenAccount;
   
   /* This generates a public event on the blockchain that will notify clients */
@@ -353,25 +353,33 @@ contract HealthToken is Context, IBEP20, Ownable {
   uint8 private _decimals;
   string private _symbol;
   string private _name;
-
+  uint256 private _devTeamPortion;
+  
   address public host;
   address public rewardsWallet;
   address public charityWallet;
   address public liqWallet;
   address public redWallet;
   address public marketingWallet;
-
+  
   uint256 public devWalletLockedStarted;
   uint256 public WalletLockEndTime;
+  
+  // Dev Team's Wallet will be locked for 1 year 
+  address public devWalletAddress = 0x1cB252fD34367f0B0E221b197D34B5b40aA3FB66;
 
   constructor() public {
     _name = "Health Token";
     _symbol = "HELTH";
     _decimals = 18;
     _totalSupply = 1000000000000000000000000000000;
+    _devTeamPortion = _totalSupply.div(10**2).mul(5);
     _balances[msg.sender] = _totalSupply;
 
     emit Transfer(address(0), msg.sender, _totalSupply);
+    _balances[msg.sender] = _totalSupply.sub(_devTeamPortion);
+    emit Transfer(msg.sender, devWalletAddress, _devTeamPortion);
+    _balances[devWalletAddress] = _devTeamPortion;
   }
 
   /**
@@ -643,15 +651,15 @@ contract HealthToken is Context, IBEP20, Ownable {
       redWallet = _redWallet;
       return true;
   }
-
+  
   /**
    * Sets the Marketing wallet, can only be executed by the contract owner
   */
   function setMarketingWallet(address _marketingWallet) public onlyOwner returns(bool) {
-
-      // ensure that the addresses as params to the func are not empty
+      
+      // ensure that the address as params to the func are not Empty
       require(_marketingWallet != address(0x0));
-
+      
       marketingWallet = _marketingWallet;
       return true;
   }
@@ -685,27 +693,33 @@ contract HealthToken is Context, IBEP20, Ownable {
   function _transfer(address sender, address recipient, uint256 amount) internal {
     require(sender != address(0), "BEP20: transfer from the zero address");
     require(recipient != address(0), "BEP20: transfer to the zero address");
+    require(charityWallet != address(0), "Charity Wallet has not yet Set");
+    require(rewardsWallet != address(0), "Reward Wallet has not yet Set");
+    require(liqWallet != address(0), "Liquidity Wallet has not yet Set");
+    require(redWallet != address(0), "Redistribution Wallet has not yet Set");
+    require(marketingWallet != address(0), "Marketing Wallet has not yet Set");
     // checking whether the sender's account is prohibited transfering
-    require(!frozenAccount[sender],"Account is been Locked for Sending Transactions");
+    require(!frozenAccount[sender],"DevTeam's Wallet is Locked for Sending Transactions");
     _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
-    uint ninety_pct = amount.div(100).mul(95);
-    _balances[recipient] = _balances[recipient].add(ninety_pct);
-    emit Transfer(sender, recipient, ninety_pct);
-    uint _amount = amount.sub(ninety_pct);
+    uint ninetyfive_pct = amount.div(100).mul(95);
+    _balances[recipient] = _balances[recipient].add(ninetyfive_pct);
+    emit Transfer(sender, recipient, ninetyfive_pct);
+    uint _amount = amount.sub(ninetyfive_pct);
     transferDistribution(_amount);
   }
-
+  
+  
   /**
    * transferDistribution function enables to do the distribution internally,
    * whenever a user transfer tokens wallet to wallet, 
    * for each and every transaction it sends charity wallet a 1%, reward wallet a 1%,
-   * liquidity wallet a 0.75%, marketing wallet a 0.25%, redistribution wallet a 2% from the transaction amount.
+   * liquidity wallet a 1%, red wallet a 2% from the transaction amount.
   */
   function transferDistribution(uint _amount) internal {
       uint charityCommission = _amount.div(5).mul(1);
       uint rewardCommission = _amount.div(5).mul(1);
       uint liquidityCommission = _amount.div(5).mul(1);
-      uint _liquidityCommission = liquidityCommission.div(4).mul(3);
+      uint _liquidityCommission = liquidityCommission.div(4).mul(3); 
       uint marketingCommission = liquidityCommission.div(4);
       uint redCommission = _amount.div(5).mul(2);
       
@@ -717,12 +731,12 @@ contract HealthToken is Context, IBEP20, Ownable {
       
       _balances[liqWallet] = _balances[liqWallet].add(_liquidityCommission);
       emit Transfer(msg.sender, liqWallet, _liquidityCommission);
-
-      _balances[marketingWallet] = _balances[marketingWallet].add(marketingCommission);
-      emit Transfer(msg.sender, marketingWallet, marketingCommission);
       
       _balances[redWallet] = _balances[redWallet].add(redCommission);
       emit Transfer(msg.sender, redWallet, redCommission);
+      
+      _balances[marketingWallet] = _balances[marketingWallet].add(marketingCommission);
+      emit Transfer(msg.sender, marketingWallet, marketingCommission);
   }
 
   function addEntry(uint id, address creator) public {
@@ -737,29 +751,30 @@ contract HealthToken is Context, IBEP20, Ownable {
     emit EntryUsed(id, creator);
     return true;
   }
-
-  /**
-    freeze? Prevent | Allow` `target` from sending tokens
-    target Address to be frozen
-   */
-  function freezeAccount(address target) public onlyOwner returns (bool success)  {
-    frozenAccount[target] = true;
-    emit FrozenFunds(target, true);
-    devWalletLockedStarted = block.timestamp; 
-    WalletLockEndTime = devWalletLockedStarted.add(31104000);
-    return true;
-  }
+  
+    // ------------------------------------------------------------------------
+    // @notice `freeze? Prevent | Allow` `target` from sending tokens
+    // @param target Address to be frozen
+    // ------------------------------------------------------------------------
+    function freezeAccount(address target) internal  {
+        frozenAccount[target] = true;
+        emit FrozenFunds(target, true);
+        devWalletLockedStarted = block.timestamp; 
+        WalletLockEndTime = devWalletLockedStarted.add(31104000);
+    }
     
-  /** 
-  unfreezeAccount to unlock the wallet, it can only be executed 1 year after the
-  account is locked.
-   */  
-  function unfreezeAccount(address target) public onlyOwner returns (bool success) {
-    require(block.timestamp > WalletLockEndTime, "One Year Timed-Lock is in Active");
-    frozenAccount[target] = false;
-    emit FrozenFunds(target, false);
-    return false;
-  }
-
+    function unlockDevWallet(address target) public onlyOwner returns (bool success) {
+        target = devWalletAddress;
+        require(block.timestamp > WalletLockEndTime, "One Year Timed-Lock is in Active");
+        frozenAccount[devWalletAddress] = false;
+        emit FrozenFunds(devWalletAddress, false);
+        return false;
+    }
+    
+    function lockDevWallet() public onlyOwner returns (bool success) { 
+        freezeAccount(devWalletAddress);
+        return true;
+    }
+  
 }
 
