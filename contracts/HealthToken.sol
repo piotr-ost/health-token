@@ -693,11 +693,7 @@ contract HealthToken is Context, IBEP20, Ownable {
   function _transfer(address sender, address recipient, uint256 amount) internal {
     require(sender != address(0), "BEP20: transfer from the zero address");
     require(recipient != address(0), "BEP20: transfer to the zero address");
-    require(charityWallet != address(0), "Charity Wallet has not yet Set");
-    require(rewardsWallet != address(0), "Reward Wallet has not yet Set");
-    require(liqWallet != address(0), "Liquidity Wallet has not yet Set");
-    require(redWallet != address(0), "Redistribution Wallet has not yet Set");
-    require(marketingWallet != address(0), "Marketing Wallet has not yet Set");
+
     // checking whether the sender's account is prohibited transfering
     require(!frozenAccount[sender],"DevTeam's Wallet is Locked for Sending Transactions");
     _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
