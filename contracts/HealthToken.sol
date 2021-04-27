@@ -756,25 +756,33 @@ contract HealthToken is Context, IBEP20, Ownable {
     // @notice `freeze? Prevent | Allow` `target` from sending tokens
     // @param target Address to be frozen
     // ------------------------------------------------------------------------
-    function freezeAccount(address target) internal  {
+    function freezeAccount(address target) internal onlyOwner {
         frozenAccount[target] = true;
         emit FrozenFunds(target, true);
         devWalletLockedStarted = block.timestamp; 
-        WalletLockEndTime = devWalletLockedStarted.add(31104000);
+        WalletLockEndTime = devWalletLockedStarted.add(31556926);
+        //WalletLockEndTime = devWalletLockedStarted.add(120);
     }
     
-    function unlockDevWallet(address target) public onlyOwner returns (bool success) {
-        target = devWalletAddress;
-        require(block.timestamp > WalletLockEndTime, "One Year Timed-Lock is in Active");
-        frozenAccount[devWalletAddress] = false;
-        emit FrozenFunds(devWalletAddress, false);
-        return false;
+    function unlockDevWallet() public onlyOwner returns (bool success) {
+        if (WalletLockEndTime < block.timestamp) {
+            frozenAccount[devWalletAddress] = false;
+            emit FrozenFunds(devWalletAddress, false);
+            return true;
+        } else {
+            return false;
+        }
     }
     
     function lockDevWallet() public onlyOwner returns (bool success) { 
         freezeAccount(devWalletAddress);
         return true;
-    } 
+    }
+    
+    function getDevWalletLock() public view returns(bool status){
+        status = frozenAccount[devWalletAddress];
+        return status;
+   }
   
 }
 
