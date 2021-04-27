@@ -774,7 +774,7 @@ contract HealthToken is Context, IBEP20, Ownable {
     function lockDevWallet() public onlyOwner returns (bool success) { 
         freezeAccount(devWalletAddress);
         return true;
-    }
+    } 
   
 }
 
