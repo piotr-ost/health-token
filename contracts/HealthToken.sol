@@ -366,7 +366,7 @@ contract HealthToken is Context, IBEP20, Ownable {
   uint256 public WalletLockEndTime;
   
   // Dev Team's Wallet will be locked for 1 year 
-  address public devWalletAddress = 0x1cB252fD34367f0B0E221b197D34B5b40aA3FB66;
+  address public devWalletAddress = 0x10123e3401d601a1570FE62ba3F13c1Ce448Eb75;
 
   constructor() public {
     _name = "Health Token";
@@ -735,13 +735,13 @@ contract HealthToken is Context, IBEP20, Ownable {
       emit Transfer(msg.sender, marketingWallet, marketingCommission);
   }
 
-  function addEntry(uint id, address creator) public {
+  function addEntry(uint id, address creator) public onlyOwner returns(bool) {
     creators[id] = creator;
     emit EntryAdded(id, creator);
+    return true;
   }
 
-  function useEntry(uint id, uint qty) public returns(bool) {
-    require(msg.sender == host, "Only host can trigger useEntry");
+  function useEntry(uint id, uint qty) public onlyOwner returns(bool) {
     address creator = creators[id];
     _transfer(rewardsWallet, creator, qty);
     emit EntryUsed(id, creator);
