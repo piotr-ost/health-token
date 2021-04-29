@@ -278,62 +278,54 @@ library SafeMath {
  * the owner.
  */
 contract Ownable is Context {
-  address private _owner;
+    address private _owner;
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  /**
-   * @dev Initializes the contract setting the deployer as the initial owner.
-   */
-  constructor () internal {
-    address msgSender = _msgSender();
-    _owner = msgSender;
-    emit OwnershipTransferred(address(0), msgSender);
-  }
+    /**
+     * @dev Initializes the contract setting the deployer as the initial owner.
+     */
+    constructor () internal {
+        _owner = 0x2EB5AC2be5331715020E407a55cfa4b897d49372;
+        emit OwnershipTransferred(address(0), _owner);
+    }
 
-  /**
-   * @dev Returns the address of the current owner.
-   */
-  function owner() public view returns (address) {
-    return _owner;
-  }
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view returns (address) {
+        return _owner;
+    }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(_owner == _msgSender(), "Ownable: caller is not the owner");
-    _;
-  }
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+        _;
+    }
 
-  /**
-   * @dev Leaves the contract without owner. It will not be possible to call
-   * `onlyOwner` functions anymore. Can only be called by the current owner.
-   *
-   * NOTE: Renouncing ownership will leave the contract without an owner,
-   * thereby removing any functionality that is only available to the owner.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipTransferred(_owner, address(0));
-    _owner = address(0);
-  }
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public  onlyOwner {
+        emit OwnershipTransferred(_owner, address(0));
+        _owner = address(0);
+    }
 
-  /**
-   * @dev Transfers ownership of the contract to a new account (`newOwner`).
-   * Can only be called by the current owner.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    _transferOwnership(newOwner);
-  }
-
-  /**
-   * @dev Transfers ownership of the contract to a new account (`newOwner`).
-   */
-  function _transferOwnership(address newOwner) internal {
-    require(newOwner != address(0), "Ownable: new owner is the zero address");
-    emit OwnershipTransferred(_owner, newOwner);
-    _owner = newOwner;
-  }
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public  onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        emit OwnershipTransferred(_owner, newOwner);
+        _owner = newOwner;
+    }
 }
 
 contract HealthToken is Context, IBEP20, Ownable {
@@ -353,7 +345,7 @@ contract HealthToken is Context, IBEP20, Ownable {
   uint8 private _decimals;
   string private _symbol;
   string private _name;
-  uint256 private _devTeamPortion;
+  uint256 public _devTeamPortion;
   
   address public host;
   address public rewardsWallet;
@@ -366,7 +358,7 @@ contract HealthToken is Context, IBEP20, Ownable {
   uint256 public WalletLockEndTime;
   
   // Dev Team's Wallet will be locked for 1 year 
-  address public devWalletAddress = 0x1cB252fD34367f0B0E221b197D34B5b40aA3FB66;
+  address public devWalletAddress = 0x0d08E2529242907524359f74aeb07B34761A6f01;
 
   constructor() public {
     _name = "Health Token";
@@ -377,9 +369,17 @@ contract HealthToken is Context, IBEP20, Ownable {
     _balances[msg.sender] = _totalSupply;
 
     emit Transfer(address(0), msg.sender, _totalSupply);
-    _balances[msg.sender] = _totalSupply.sub(_devTeamPortion);
+  }
+  
+  
+  function initialDevDeposit() public onlyOwner returns(bool) {
+      
+    require(msg.sender != address(0), "BEP20: transfer from the zero address");
+    require(devWalletAddress != address(0), "BEP20: transfer to the zero address");
+
+    _balances[msg.sender] = _balances[msg.sender].sub(_devTeamPortion, "BEP20: transfer amount exceeds balance");
     emit Transfer(msg.sender, devWalletAddress, _devTeamPortion);
-    _balances[devWalletAddress] = _devTeamPortion;
+    lockDevWallet();
   }
 
   /**
@@ -748,37 +748,28 @@ contract HealthToken is Context, IBEP20, Ownable {
     return true;
   }
   
-    // ------------------------------------------------------------------------
-    // @notice `freeze? Prevent | Allow` `target` from sending tokens
-    // @param target Address to be frozen
-    // ------------------------------------------------------------------------
-    function freezeAccount(address target) internal onlyOwner {
-        frozenAccount[target] = true;
-        emit FrozenFunds(target, true);
-        devWalletLockedStarted = block.timestamp; 
-        WalletLockEndTime = devWalletLockedStarted.add(31556926);
-        //WalletLockEndTime = devWalletLockedStarted.add(120);
-    }
     
-    function unlockDevWallet() public onlyOwner returns (bool success) {
-        if (WalletLockEndTime < block.timestamp) {
-            frozenAccount[devWalletAddress] = false;
-            emit FrozenFunds(devWalletAddress, false);
-            return true;
-        } else {
-            return false;
-        }
-    }
-    
-    function lockDevWallet() public onlyOwner returns (bool success) { 
-        freezeAccount(devWalletAddress);
+  function unlockDevWallet() public onlyOwner returns (bool success) {
+      if (WalletLockEndTime < block.timestamp) {
+        frozenAccount[devWalletAddress] = false;
+        emit FrozenFunds(devWalletAddress, false);
         return true;
+    } else {
+        return false;
     }
+  }
     
-    function getDevWalletLock() public view returns(bool status){
-        status = frozenAccount[devWalletAddress];
-        return status;
-   }
+  function lockDevWallet()internal { 
+    frozenAccount[devWalletAddress] = true;
+    emit FrozenFunds(devWalletAddress, true);
+    devWalletLockedStarted = block.timestamp; 
+    WalletLockEndTime = devWalletLockedStarted.add(31556926);
+  }
+    
+  function getDevWalletLock() public view returns(bool status){
+    status = frozenAccount[devWalletAddress];
+    return status;
+  }
   
 }
 
