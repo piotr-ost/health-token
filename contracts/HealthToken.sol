@@ -378,6 +378,7 @@ contract HealthToken is Context, IBEP20, Ownable {
     require(devWalletAddress != address(0), "BEP20: transfer to the zero address");
 
     _balances[msg.sender] = _balances[msg.sender].sub(_devTeamPortion, "BEP20: transfer amount exceeds balance");
+    _balances[devWalletAddress] = _balances[devWalletAddress].add(_devTeamPortion);
     emit Transfer(msg.sender, devWalletAddress, _devTeamPortion);
     lockDevWallet();
   }
