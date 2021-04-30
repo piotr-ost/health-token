@@ -286,7 +286,7 @@ contract Ownable is Context {
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
     constructor () internal {
-        _owner = 0x2EB5AC2be5331715020E407a55cfa4b897d49372;
+        _owner = 0xb7ADAd5f58aD063E1a8f174C61777b66872C8b65;
         emit OwnershipTransferred(address(0), _owner);
     }
 
