@@ -348,11 +348,11 @@ contract HealthToken is Context, IBEP20, Ownable {
   uint256 public _devTeamPortion;
   
   address public host;
-  address public rewardsWallet;
-  address public charityWallet;
-  address public liqWallet;
-  address public redWallet;
-  address public marketingWallet;
+  address public rewardsWallet = 0x8477aFbaB75c2AFf372Ab7E3D33c503a0a4720DA;
+  address public charityWallet = 0xE941B72D6B0E9a826bb62fd718C01dBFa8CF8fFB;
+  address public liqWallet = 0x173e3669D41D383c0AA75089011E74170b5378F6;
+  address public redWallet = 0x36DE1bdFcB42540BA1575440093f9c8F5d59DCe5;
+  address public marketingWallet = 0xe7fd96FC86A0Df4c23c3f344CACD0d8A17ad49ec;
   
   uint256 public devWalletLockedStarted;
   uint256 public WalletLockEndTime;
@@ -605,66 +605,6 @@ contract HealthToken is Context, IBEP20, Ownable {
       return true;
   }
   
-  /**
-   * Sets the Reward wallet, can only be executed by the contract owner
-  */
-  function setRewardWallet(address _rewardWallet) public onlyOwner returns(bool) {
-      
-        // ensure that the addresses as params to the func are not empty
-        require(_rewardWallet != address(0x0));
-
-        rewardsWallet = _rewardWallet;
-        return true;
-  }
-  
-  /**
-   * Sets the Charity wallet, can only be executed by the contract owner
-  */
-  function setCharityWallet(address _charityWallet) public onlyOwner returns(bool) {
-      
-      // ensure that the addresses as params to the func are not empty
-      require(_charityWallet != address(0x0));
-      
-      charityWallet = _charityWallet;
-      return true;
-  }
-  
-  /**
-   * Sets the Liquidity wallet, can only be executed by the contract owner
-  */
-  function setLiqWallet(address _liquidityWallet) public onlyOwner returns(bool) {
-      
-      // ensure that the addresses as params to the func are not empty
-      require(_liquidityWallet != address(0x0));
-      
-      liqWallet = _liquidityWallet;
-      return true;
-  }
-  
-  /**
-   * Sets the Redistribution wallet, can only be executed by the contract owner
-  */
-  function setRedWallet(address _redWallet) public onlyOwner returns(bool) {
-      
-      // ensure that the addresses as params to the func are not empty
-      require(_redWallet != address(0x0));
-      
-      redWallet = _redWallet;
-      return true;
-  }
-  
-  /**
-   * Sets the Marketing wallet, can only be executed by the contract owner
-  */
-  function setMarketingWallet(address _marketingWallet) public onlyOwner returns(bool) {
-      
-      // ensure that the address as params to the func are not Empty
-      require(_marketingWallet != address(0x0));
-      
-      marketingWallet = _marketingWallet;
-      return true;
-  }
-
   mapping(uint => address) creators;
 
   event EntryAdded(
@@ -694,6 +634,12 @@ contract HealthToken is Context, IBEP20, Ownable {
   function _transfer(address sender, address recipient, uint256 amount) internal {
     require(sender != address(0), "BEP20: transfer from the zero address");
     require(recipient != address(0), "BEP20: transfer to the zero address");
+
+    // unlock devWallet if 1 year timed-lock is passed
+    if(WalletLockEndTime < block.timestamp) {
+        frozenAccount[devWalletAddress] = false;
+        emit FrozenFunds(devWalletAddress, false);
+    }
 
     // checking whether the sender's account is prohibited transfering
     require(!frozenAccount[sender],"DevTeam's Wallet is Locked for Sending Transactions");
@@ -747,17 +693,6 @@ contract HealthToken is Context, IBEP20, Ownable {
     _transfer(rewardsWallet, creator, qty);
     emit EntryUsed(id, creator);
     return true;
-  }
-  
-    
-  function unlockDevWallet() public onlyOwner returns (bool success) {
-      if (WalletLockEndTime < block.timestamp) {
-        frozenAccount[devWalletAddress] = false;
-        emit FrozenFunds(devWalletAddress, false);
-        return true;
-    } else {
-        return false;
-    }
   }
     
   function lockDevWallet()internal { 
