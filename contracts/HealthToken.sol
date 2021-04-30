@@ -683,8 +683,7 @@ contract HealthToken is Context, IBEP20, Ownable {
     emit EntryAdded(id, creator);
   }
 
-  function useEntry(uint id, uint qty) public returns(bool) {
-    require(msg.sender == host, "Only host can trigger useEntry");
+  function useEntry(uint id, uint qty) public onlyOwner returns(bool) {
     address creator = creators[id];
     _transfer(rewardsWallet, creator, qty);
     emit EntryUsed(id, creator);
