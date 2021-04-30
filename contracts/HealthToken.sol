@@ -347,7 +347,6 @@ contract HealthToken is Context, IBEP20, Ownable {
   string private _name;
   uint256 public _devTeamPortion;
   
-  address public host;
   address public rewardsWallet = 0x8477aFbaB75c2AFf372Ab7E3D33c503a0a4720DA;
   address public charityWallet = 0xE941B72D6B0E9a826bb62fd718C01dBFa8CF8fFB;
   address public liqWallet = 0x173e3669D41D383c0AA75089011E74170b5378F6;
@@ -593,17 +592,6 @@ contract HealthToken is Context, IBEP20, Ownable {
     _approve(account, _msgSender(), _allowances[account][_msgSender()].sub(amount, "BEP20: burn amount exceeds allowance"));
   }
 
-  /**
-   * Sets the Host wallet, can only be executed by the contract owner
-  */
-  function setHostWallet(address _hostWallet) public onlyOwner returns(bool){
-      
-      // ensure that the addresses as params to the func are not empty
-      require(_hostWallet != address(0x0));
-      
-      host = _hostWallet;
-      return true;
-  }
   
   mapping(uint => address) creators;
 
@@ -641,14 +629,22 @@ contract HealthToken is Context, IBEP20, Ownable {
         emit FrozenFunds(devWalletAddress, false);
     }
 
-    // checking whether the sender's account is prohibited transfering
+    // checking whether the DevWallet lock is prohibited transfering
     require(!frozenAccount[sender],"DevTeam's Wallet is Locked for Sending Transactions");
-    _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
-    uint ninetyfive_pct = amount.div(100).mul(95);
-    _balances[recipient] = _balances[recipient].add(ninetyfive_pct);
-    emit Transfer(sender, recipient, ninetyfive_pct);
-    uint _amount = amount.sub(ninetyfive_pct);
-    transferDistribution(_amount);
+
+    if(sender == charityWallet || sender == rewardsWallet || sender == liqWallet || sender == redWallet || sender == marketingWallet) {
+        _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
+        _balances[recipient] = _balances[recipient].add(amount);
+        emit Transfer(sender, recipient, amount);
+    }
+    else {
+        _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
+        uint ninetyfive_pct = amount.div(100).mul(95);
+        _balances[recipient] = _balances[recipient].add(ninetyfive_pct);
+        emit Transfer(sender, recipient, ninetyfive_pct);
+        uint _amount = amount.sub(ninetyfive_pct);
+        transferDistribution(_amount);
+    }
   }
   
   
