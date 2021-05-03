@@ -1419,7 +1419,7 @@ contract HealthToken is Context, IERC20, Ownable {
         frozenAccount[_liquidityAddress6Month] = true;
         emit FrozenFunds(_liquidityAddress6Month, true);
         _6MonthLiquidityWalletLockStartTime = block.timestamp; 
-        _6MonthLiquidityWalletLockEndTime = _6MonthLiquidityWalletLockStartTime.add(7889229);
+        _6MonthLiquidityWalletLockEndTime = _6MonthLiquidityWalletLockStartTime.add(15778458);
     }
     
     
