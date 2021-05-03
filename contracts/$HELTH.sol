@@ -815,13 +815,13 @@ contract HealthToken is Context, IERC20, Ownable {
     mapping (address => bool) private _isExcluded;
     address[] private _excluded;
 
-    address private _charityWalletAddress = 0x5862Df1C2442b453a057760A49Ff07A36DE67c63;
-    address private _marketingWalletAddress = 0xb1A723C7715747bA8E3Be5925d51Ce33e7fF7552;
-    address private _rewardWalletAddress = 0x8747c4e28F3298939A58fdc3d6554Dc2BFc366c0;
-    address private _devWalletAddress = 0x0d08E2529242907524359f74aeb07B34761A6f01;
-    address private _liquidityAddress1Month = 0xF586B3842fce1c0D71c8c3369d442a3692620d28;
-    address private _liquidityAddress3Month = 0xB80Cc8a9dced4de84e43Aa187FD92B0A63FEdF78;
-    address private _liquidityAddress6Month = 0x371c106D98eDC942abAEb89B2900CdE4C36765b2;
+    address public _charityWalletAddress = 0x5862Df1C2442b453a057760A49Ff07A36DE67c63;
+    address public _marketingWalletAddress = 0xb1A723C7715747bA8E3Be5925d51Ce33e7fF7552;
+    address public _rewardWalletAddress = 0x8747c4e28F3298939A58fdc3d6554Dc2BFc366c0;
+    address public _devWalletAddress = 0x0d08E2529242907524359f74aeb07B34761A6f01;
+    address public _liquidityAddress1Month = 0xF586B3842fce1c0D71c8c3369d442a3692620d28;
+    address public _liquidityAddress3Month = 0xB80Cc8a9dced4de84e43Aa187FD92B0A63FEdF78;
+    address public _liquidityAddress6Month = 0x371c106D98eDC942abAEb89B2900CdE4C36765b2;
     
     bool public _initialMarketingDeposit;
     bool public _initialRewardDeposit;
@@ -829,14 +829,14 @@ contract HealthToken is Context, IERC20, Ownable {
     uint256 public _devWalletLockedStartTime;
     uint256 public _WalletLockEndTime;
     
-    uint256 private _1MonthLiquidityWalletLockStartTime;
-    uint256 private _1MonthLiquidityWalletLockEndTime;
+    uint256 public _1MonthLiquidityWalletLockStartTime;
+    uint256 public _1MonthLiquidityWalletLockEndTime;
     
-    uint256 private _3MonthLiquidityWalletLockStartTime;
-    uint256 private _3MonthLiquidityWalletLockEndTime;
+    uint256 public _3MonthLiquidityWalletLockStartTime;
+    uint256 public _3MonthLiquidityWalletLockEndTime;
     
-    uint256 private _6MonthLiquidityWalletLockStartTime;
-    uint256 private _6MonthLiquidityWalletLockEndTime;
+    uint256 public _6MonthLiquidityWalletLockStartTime;
+    uint256 public _6MonthLiquidityWalletLockEndTime;
     
     uint256 private constant MAX = ~uint256(0);
     uint256 private _tTotal = 1000000 * 10**6 * 10**9;
