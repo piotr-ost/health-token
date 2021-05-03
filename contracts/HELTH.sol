@@ -2,16 +2,6 @@
 
 // SPDX-License-Identifier: Unlicensed
 
-/**
-
-   #$HELTH
-
-   1% fee auto add to the liquidity pool to locked forever when selling
-   2% fee auto distribute to all holders
-   1% fee auto moved to charity wallet
-
- */
-
 pragma solidity ^0.8.3;
 
 /**
@@ -815,13 +805,13 @@ contract HealthToken is Context, IERC20, Ownable {
     mapping (address => bool) private _isExcluded;
     address[] private _excluded;
 
-    address public _charityWalletAddress = 0x5862Df1C2442b453a057760A49Ff07A36DE67c63;
-    address public _marketingWalletAddress = 0xb1A723C7715747bA8E3Be5925d51Ce33e7fF7552;
-    address public _rewardWalletAddress = 0x8747c4e28F3298939A58fdc3d6554Dc2BFc366c0;
-    address public _devWalletAddress = 0x0d08E2529242907524359f74aeb07B34761A6f01;
-    address public _liquidityAddress1Month = 0xF586B3842fce1c0D71c8c3369d442a3692620d28;
-    address public _liquidityAddress3Month = 0xB80Cc8a9dced4de84e43Aa187FD92B0A63FEdF78;
-    address public _liquidityAddress6Month = 0x371c106D98eDC942abAEb89B2900CdE4C36765b2;
+    address public _charityWalletAddress = 0xE941B72D6B0E9a826bb62fd718C01dBFa8CF8fFB;
+    address public _marketingWalletAddress = 0xe7fd96FC86A0Df4c23c3f344CACD0d8A17ad49ec;
+    address public _rewardWalletAddress = 0x8477aFbaB75c2AFf372Ab7E3D33c503a0a4720DA;
+    address public _devWalletAddress = 0x10123e3401d601a1570FE62ba3F13c1Ce448Eb75;
+    address public _liquidityAddress1Month = 0xc438D66539c1225b6A6078Abdf5741E3cFE3610C;
+    address public _liquidityAddress3Month = 0x3Ec904DA63B4411607E7026b6dE31298DFD3C3Cf;
+    address public _liquidityAddress6Month = 0x66Cfa079E3e27a4a5B516B1575f8811c90B07444;
     
     bool public _initialMarketingDeposit;
     bool public _initialRewardDeposit;
@@ -889,7 +879,8 @@ contract HealthToken is Context, IERC20, Ownable {
     constructor () {
         _rOwned[owner()] = _rTotal;
         // 0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F router for mainnet
-        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+        // 0xD99D1c33F9fC3444f8101754aBC46c52416550D1 for testnet
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
          // Create a uniswap pair for this new token
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
