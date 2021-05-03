@@ -815,14 +815,29 @@ contract HealthToken is Context, IERC20, Ownable {
     mapping (address => bool) private _isExcluded;
     address[] private _excluded;
 
-    address private _charityWalletAddress = 0x5862Df1C2442b453a057760A49Ff07A36DE67c63;
-    address private _rewardWalletAddress = 0x8747c4e28F3298939A58fdc3d6554Dc2BFc366c0;
-    address private _devWalletAddress = 0x0d08E2529242907524359f74aeb07B34761A6f01;
+    address public _charityWalletAddress = 0x5862Df1C2442b453a057760A49Ff07A36DE67c63;
+    address public _marketingWalletAddress = 0xb1A723C7715747bA8E3Be5925d51Ce33e7fF7552;
+    address public _rewardWalletAddress = 0x8747c4e28F3298939A58fdc3d6554Dc2BFc366c0;
+    address public _devWalletAddress = 0x0d08E2529242907524359f74aeb07B34761A6f01;
+    address public _liquidityAddress1Month = 0xF586B3842fce1c0D71c8c3369d442a3692620d28;
+    address public _liquidityAddress3Month = 0xB80Cc8a9dced4de84e43Aa187FD92B0A63FEdF78;
+    address public _liquidityAddress6Month = 0x371c106D98eDC942abAEb89B2900CdE4C36765b2;
     
+    bool public _initialMarketingDeposit;
+    bool public _initialRewardDeposit;
     
-    uint256 public _devWalletLockedStarted;
+    uint256 public _devWalletLockedStartTime;
     uint256 public _WalletLockEndTime;
-   
+    
+    uint256 public _1MonthLiquidityWalletLockStartTime;
+    uint256 public _1MonthLiquidityWalletLockEndTime;
+    
+    uint256 public _3MonthLiquidityWalletLockStartTime;
+    uint256 public _3MonthLiquidityWalletLockEndTime;
+    
+    uint256 public _6MonthLiquidityWalletLockStartTime;
+    uint256 public _6MonthLiquidityWalletLockEndTime;
+    
     uint256 private constant MAX = ~uint256(0);
     uint256 private _tTotal = 1000000 * 10**6 * 10**9;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
@@ -830,8 +845,13 @@ contract HealthToken is Context, IERC20, Ownable {
     
     uint256 private _devTeamPortion = _tTotal.div(10**2).mul(10);
 
+    uint256 private _liquidityLockPortion = _tTotal.div(10**2).mul(10);
+    uint256 private _marketingPortion = _tTotal.div(10**4).mul(125);
+    uint256 private _rewardPortion = _tTotal.div(10**3).mul(25);
+
     string private _name = "Health Token";
     string private _symbol = "HELTH";
+
     uint8 private _decimals = 9;
     
     uint256 public _taxFee = 2; // redistribution
@@ -1168,11 +1188,29 @@ contract HealthToken is Context, IERC20, Ownable {
         require(amount > 0, "Transfer amount must be greater than zero");
         if(from != owner() && to != owner())
             require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
+            
+        // unlock 1Month Liquidity Lock
+          if(_1MonthLiquidityWalletLockEndTime < block.timestamp) {
+          frozenAccount[_liquidityAddress1Month] = false;
+          emit FrozenFunds(_liquidityAddress1Month, false);
+        }
+        
+        // unlock 3Month Liquidity Lock
+        if(_3MonthLiquidityWalletLockEndTime < block.timestamp) {
+          frozenAccount[_liquidityAddress3Month] = false;
+          emit FrozenFunds(_liquidityAddress3Month, false);
+        }
+        
+        // unlock 6Month Liquidity Lock
+        if(_6MonthLiquidityWalletLockEndTime < block.timestamp) {
+          frozenAccount[_liquidityAddress6Month] = false;
+          emit FrozenFunds(_liquidityAddress6Month, false);
+        }
 
         // unlock devWallet if 1 year timed-lock is passed
         if(_WalletLockEndTime < block.timestamp) {
-        frozenAccount[_devWalletAddress] = false;
-        emit FrozenFunds(_devWalletAddress, false);
+          frozenAccount[_devWalletAddress] = false;
+          emit FrozenFunds(_devWalletAddress, false);
         }
 
         // is the token balance of this contract address over the min number of
@@ -1322,8 +1360,9 @@ contract HealthToken is Context, IERC20, Ownable {
     function lockDevWallet()internal { 
         frozenAccount[_devWalletAddress] = true;
         emit FrozenFunds(_devWalletAddress, true);
-        _devWalletLockedStarted = block.timestamp; 
-        _WalletLockEndTime = _devWalletLockedStarted.add(31556926);
+        _devWalletLockedStartTime = block.timestamp; 
+        _WalletLockEndTime = _devWalletLockedStartTime.add(31556926);
+
     }
     
     function getDevWalletLock() public view returns(bool status){
@@ -1343,8 +1382,8 @@ contract HealthToken is Context, IERC20, Ownable {
     mapping(uint => address) creators;
 
     event EntryAdded(
-        uint id,
-        address creator
+      uint id,
+      address creator
     );
 
     event EntryUsed(
@@ -1362,6 +1401,63 @@ contract HealthToken is Context, IERC20, Ownable {
         _transfer(_rewardWalletAddress, creator, qty);
         emit EntryUsed(id, creator);
         return true;
+    }
+    
+    function lockLiquidityWallet1Month()internal { 
+        frozenAccount[_liquidityAddress1Month] = true;
+        emit FrozenFunds(_liquidityAddress1Month, true);
+        _1MonthLiquidityWalletLockStartTime = block.timestamp; 
+        _1MonthLiquidityWalletLockEndTime = _1MonthLiquidityWalletLockStartTime.add(2629743);
+    }
+    
+    function lockLiquidityWallet3Month()internal { 
+        frozenAccount[_liquidityAddress3Month] = true;
+        emit FrozenFunds(_liquidityAddress3Month, true);
+        _3MonthLiquidityWalletLockStartTime = block.timestamp; 
+        _3MonthLiquidityWalletLockEndTime = _3MonthLiquidityWalletLockStartTime.add(7889229);
+    }
+    
+    function lockLiquidityWallet6Month()internal { 
+        frozenAccount[_liquidityAddress6Month] = true;
+        emit FrozenFunds(_liquidityAddress6Month, true);
+        _6MonthLiquidityWalletLockStartTime = block.timestamp; 
+        _6MonthLiquidityWalletLockEndTime = _6MonthLiquidityWalletLockStartTime.add(15778458);
+    }
+    
+    
+    function liquidityWalletLock() public onlyOwner returns(bool success) { 
+        require(msg.sender != address(0), "BEP20: transfer from the zero address");
+        require(_liquidityAddress1Month != address(0), "BEP20: transfer to the zero address");
+        require(_1MonthLiquidityWalletLockEndTime == 0,"This can only be done Once");
+        _transfer(_msgSender(), _liquidityAddress1Month, _liquidityLockPortion);
+        lockLiquidityWallet1Month();
+        _transfer(_msgSender(), _liquidityAddress3Month, _liquidityLockPortion);
+        lockLiquidityWallet3Month();
+        _transfer(_msgSender(), _liquidityAddress6Month, _liquidityLockPortion);
+        lockLiquidityWallet6Month();
+        return success;
+    }
+    
+    function DepositRewardAndMarketing() public onlyOwner returns(bool success) {
+        MarketingDeposit();
+        RewardDeposit();
+        return success;
+    }
+    
+    function MarketingDeposit() internal {
+        require(msg.sender != address(0), "BEP20: transfer from the zero address");
+        require(_marketingWalletAddress != address(0), "BEP20: transfer to the zero address");
+        require(!_initialMarketingDeposit,"This can only be done Once");
+        _transfer(_msgSender(), _marketingWalletAddress, _marketingPortion);
+        _initialMarketingDeposit = true;
+    }
+    
+    function RewardDeposit() internal {
+        require(msg.sender != address(0), "BEP20: transfer from the zero address");
+        require(_rewardWalletAddress != address(0), "BEP20: transfer to the zero address");
+        require(!_initialRewardDeposit,"This can only be done Once");
+        _transfer(_msgSender(), _rewardWalletAddress, _rewardPortion);
+        _initialRewardDeposit = true;
     }
 
 }
