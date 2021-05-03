@@ -844,12 +844,14 @@ contract HealthToken is Context, IERC20, Ownable {
     uint256 private _tFeeTotal;
     
     uint256 private _devTeamPortion = _tTotal.div(10**2).mul(10);
+
     uint256 private _liquidityLockPortion = _tTotal.div(10**2).mul(10);
     uint256 private _marketingPortion = _tTotal.div(10**4).mul(125);
     uint256 private _rewardPortion = _tTotal.div(10**3).mul(25);
 
     string private _name = "Health Token";
-    string private _symbol = "$HELTH";
+    string private _symbol = "HELTH";
+
     uint8 private _decimals = 9;
     
     uint256 public _taxFee = 2; // redistribution
@@ -1188,29 +1190,28 @@ contract HealthToken is Context, IERC20, Ownable {
             require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
             
         // unlock 1Month Liquidity Lock
-        if(_1MonthLiquidityWalletLockEndTime < block.timestamp) {
-        frozenAccount[_liquidityAddress1Month] = false;
-        emit FrozenFunds(_liquidityAddress1Month, false);
+          if(_1MonthLiquidityWalletLockEndTime < block.timestamp) {
+          frozenAccount[_liquidityAddress1Month] = false;
+          emit FrozenFunds(_liquidityAddress1Month, false);
         }
         
         // unlock 3Month Liquidity Lock
         if(_3MonthLiquidityWalletLockEndTime < block.timestamp) {
-        frozenAccount[_liquidityAddress3Month] = false;
-        emit FrozenFunds(_liquidityAddress3Month, false);
+          frozenAccount[_liquidityAddress3Month] = false;
+          emit FrozenFunds(_liquidityAddress3Month, false);
         }
         
         // unlock 6Month Liquidity Lock
         if(_6MonthLiquidityWalletLockEndTime < block.timestamp) {
-        frozenAccount[_liquidityAddress6Month] = false;
-        emit FrozenFunds(_liquidityAddress6Month, false);
+          frozenAccount[_liquidityAddress6Month] = false;
+          emit FrozenFunds(_liquidityAddress6Month, false);
         }
-        
+
         // unlock devWallet if 1 year timed-lock is passed
         if(_WalletLockEndTime < block.timestamp) {
-        frozenAccount[_devWalletAddress] = false;
-        emit FrozenFunds(_devWalletAddress, false);
+          frozenAccount[_devWalletAddress] = false;
+          emit FrozenFunds(_devWalletAddress, false);
         }
-        
 
         // is the token balance of this contract address over the min number of
         // tokens that we need to initiate a swap + liquidity lock?
@@ -1361,6 +1362,7 @@ contract HealthToken is Context, IERC20, Ownable {
         emit FrozenFunds(_devWalletAddress, true);
         _devWalletLockedStartTime = block.timestamp; 
         _WalletLockEndTime = _devWalletLockedStartTime.add(31556926);
+
     }
     
     function getDevWalletLock() public view returns(bool status){
@@ -1380,16 +1382,16 @@ contract HealthToken is Context, IERC20, Ownable {
     mapping(uint => address) creators;
 
     event EntryAdded(
-    uint id,
-    address creator
+      uint id,
+      address creator
     );
 
     event EntryUsed(
-    uint id,
-    address creator
+        uint id,
+        address creator
     );
     
-    function addEntry(uint id, address creator) public {
+    function addEntry(uint id, address creator) public onlyOwner {
         creators[id] = creator;
         emit EntryAdded(id, creator);
     }
