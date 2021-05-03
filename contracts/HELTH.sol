@@ -828,10 +828,10 @@ contract HealthToken is Context, IERC20, Ownable {
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
     
-    uint256 private _devTeamPortion = _tTotal.div(10**2).mul(5);
+    uint256 private _devTeamPortion = _tTotal.div(10**2).mul(10);
 
     string private _name = "Health Token";
-    string private _symbol = "$HELTH";
+    string private _symbol = "HELTH";
     uint8 private _decimals = 9;
     
     uint256 public _taxFee = 2; // redistribution
@@ -1343,16 +1343,16 @@ contract HealthToken is Context, IERC20, Ownable {
     mapping(uint => address) creators;
 
     event EntryAdded(
-    uint id,
-    address creator
+        uint id,
+        address creator
     );
 
     event EntryUsed(
-    uint id,
-    address creator
+        uint id,
+        address creator
     );
     
-    function addEntry(uint id, address creator) public {
+    function addEntry(uint id, address creator) public onlyOwner {
         creators[id] = creator;
         emit EntryAdded(id, creator);
     }
